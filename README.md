@@ -11,3 +11,6 @@ echarts3.0也是使用单文件模块化导入的方式来载入包的，但是�
 * echarts-x, version 0.2.0
 
 ######所有的包都包含在echarts-x/dep文件夹下了。代码里要还改config的那个路径，不是src,而是build/dist。
+
+##echarts-x-package
+######echarts-x使用的是模块化包的形式来导入包的，版本信息同上。
