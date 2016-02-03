@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>Example</title>
+</head>
+<body>
+    <div id="main" style="width: 600px;height:400px;"></div>
+    <script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.0.js"></script>
+    <script src="dep/echarts/build/dist/echarts.js"></script>
+    <!-- 引入 ECharts-X 主文件 --> 
+    <script src="dep/echarts-x/build/dist/echarts-x.js"></script>
+    <!-- 必须要先引入 ECharts 主文件 -->
+    <!--<script src="dep/echarts/build/dist/echarts.js"></script>
+    <script src="dep/zrender/build/zrender.js"></script>
+    <script src="dep/qtek/dist/qtek.js"></script>
+    <!-- 引入 ECharts-X 主文件 --> 
+    <!--<script src="dep/echarts-x/build/dist/echarts-x.js"></script>-->
+    <!--<script src="dep/require.js"></script>-->
+
+
+
+    <script type="text/javascript">
+        // 配置后续加载的各种 chart 配置 config
+        require.config({
+            packages: [{
+                name: 'echarts',
+                location: 'dep/echarts/src',
+                main: 'echarts'
+            }, {
+                name: 'zrender',
+                location: 'dep/zrender/src',
+                main: 'zrender'
+            }, {
+                name: 'qtek',
+                location: 'dep/qtek/src',
+                // 这里需要是 qtek.amd, 如果是 qtek 会
+                // 引入所有 qtek 的模块，会导致项目体积过大
+                main: 'qtek.amd'
+            }, {
+                name: 'echarts-x',
+                location: 'dep/echarts-x/src',
+                main: 'echarts-x'
+            }]
+        })
+
+        // 然后就可以动态加载图表进行绘制啦
+        require([
+            'echarts',
+            'echarts-x',
+            // ECharts-X 中 map3d 的地图绘制基于 ECharts 中的 map。
+            'echarts/chart/map',
+            'echarts-x/chart/map3d'
+        ], function (ec) {
+            alert("ok");
+            // 跟 ECharts 一样的方式初始化
+            var myChart = ec.init(document.getElementById('main'));
+            myChart.setOption({
+                title: {
+                    text: 'A Simple Example'
+                },
+                series: [{
+                    type: 'map3d',
+                    // Empty data
+                    data: [{}]
+                }]
+            })
+        })
+    </script>
+
+</body>
+</html>
