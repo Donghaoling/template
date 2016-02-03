@@ -1,37 +1,25 @@
 var myChart = [];
 var domMain = $("[md='main']");
 
-/**
- * 主题名称
- *
- * @type {string}
- */
-var themeName = 'infographic';
-
-/**
- * 主题对象
- *
- * @type {Object}
- */
-var theme = null;
-
+var theme = 'infographic';
 $('[name=theme-select]').on('change', function(){
     selectChange($(this).val());
 });
 
 function selectChange(value){
-    themeName = value;
+    theme = value;
     showLoading();
-    $('[name=theme-select]').val(themeName);
-    if (themeName != 'default') {
+    $('[name=theme-select]').val(theme);
+    if (theme != 'default') {
         window.location.hash = value;
-        require(['theme/' + themeName], function(curTheme){
+        require(['theme/' + theme], function(curTheme){
             theme = curTheme;
             setTimeout(refreshAll, 500);
         })
     }
     else {
         window.location.hash = '';
+        theme = {};
         setTimeout(refreshAll, 500);
     }
 }
@@ -46,12 +34,6 @@ function refreshAll() {
     for (var i = 0, l = domMain.length; i < l; i++) {
         myChart[i].hideLoading();
         myChart[i].setTheme(theme);
-    }
-}
-
-function download() {
-    if (themeName) {
-        window.open('theme/' + themeName + '.js');
     }
 }
 

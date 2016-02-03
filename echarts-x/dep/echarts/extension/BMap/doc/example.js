@@ -35,7 +35,6 @@
             x: 104.114129,
             y: 37.550339
         };
-
         var point = new BMap.Point(startPoint.x, startPoint.y);
         map.centerAndZoom(point, 5);
         map.enableScrollWheelZoom(true);
@@ -217,10 +216,6 @@
             dataRange: {
                 min : 0,
                 max : 100,
-                range: {
-                    start: 10,
-                    end: 90
-                },
                 x: 'right',
                 calculable : true,
                 color: ['#ff3333', 'orange', 'yellow','lime','aqua'],
@@ -713,7 +708,6 @@
         };
 
         var myChart = BMapExt.initECharts(container);
-        window.onresize = myChart.onresize;
         BMapExt.setOption(option);
     }
 );

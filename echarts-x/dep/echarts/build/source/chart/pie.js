@@ -130,8 +130,8 @@ define('echarts/chart/pie', [
                             this.option
                         ], 'calculable')) {
                         pieCase = {
-                            zlevel: series[i].zlevel,
-                            z: series[i].z,
+                            zlevel: this.getZlevelBase(),
+                            z: this.getZBase(),
                             hoverable: false,
                             style: {
                                 x: center[0],
@@ -264,8 +264,8 @@ define('echarts/chart/pie', [
             var normalColor = this.getItemStyleColor(normal.color, seriesIndex, dataIndex, data) || defaultColor;
             var emphasisColor = this.getItemStyleColor(emphasis.color, seriesIndex, dataIndex, data) || (typeof normalColor === 'string' ? zrColor.lift(normalColor, -0.2) : normalColor);
             var sector = {
-                zlevel: serie.zlevel,
-                z: serie.z,
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase(),
                 clickable: this.deepQuery(queryTarget, 'clickable'),
                 style: {
                     x: center[0],
@@ -359,8 +359,8 @@ define('echarts/chart/pie', [
             data.__labelX = x - (textAlign === 'left' ? 5 : -5);
             data.__labelY = y;
             var ts = new TextShape({
-                zlevel: serie.zlevel,
-                z: serie.z + 1,
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase() + 1,
                 hoverable: false,
                 style: {
                     x: x,
@@ -425,8 +425,8 @@ define('echarts/chart/pie', [
                 var cosValue = zrMath.cos(midAngle, true);
                 var sinValue = zrMath.sin(midAngle, true);
                 return new PolylineShape({
-                    zlevel: serie.zlevel,
-                    z: serie.z + 1,
+                    zlevel: this.getZlevelBase(),
+                    z: this.getZBase() + 1,
                     hoverable: false,
                     style: {
                         pointList: [
@@ -689,7 +689,7 @@ define('echarts/chart/pie', [
             }
             this.shapeList = backupShapeList;
             if (!aniCount) {
-                done && done();
+                animationDone();
             }
         },
         onclick: function (param) {
@@ -722,7 +722,7 @@ define('echarts/chart/pie', [
                         target.style._hasSelected = false;
                         this._selected[seriesIndex][dataIndex] = false;
                     }
-                    this.zr.modShape(target.id);
+                    this.zr.modShape(target.id, target);
                 } else if (this.shapeList[i].style._hasSelected && this._selectedMode === 'single') {
                     seriesIndex = ecData.get(this.shapeList[i], 'seriesIndex');
                     dataIndex = ecData.get(this.shapeList[i], 'dataIndex');
@@ -730,7 +730,7 @@ define('echarts/chart/pie', [
                     this.shapeList[i].style.y = this.shapeList[i].style._y;
                     this.shapeList[i].style._hasSelected = false;
                     this._selected[seriesIndex][dataIndex] = false;
-                    this.zr.modShape(this.shapeList[i].id);
+                    this.zr.modShape(this.shapeList[i].id, this.shapeList[i]);
                 }
             }
             this.messageCenter.dispatch(ecConfig.EVENT.PIE_SELECTED, param.event, {

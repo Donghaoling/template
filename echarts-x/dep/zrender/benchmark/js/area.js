@@ -139,22 +139,8 @@ define(function(require) {
                 ctx.beginPath();
                 shape.buildPath(ctx, shape.style);
                 ctx.closePath();
-                shape.brushType = shape.brushTypeOnly || shape.brushType;
-                if (
-                    shape.style.brushType === 'fill'
-                    || shape.style.brushType === 'both'
-                ) {
-                    if (ctx.isPointInPath(x, y)) {
-                        return true;
-                    }   
-                }
-                else if (
-                    shape.style.brushType === 'stroke'
-                    || shape.style.brushType === 'both') {
-                    ctx.lineWidth = shape.style.lineWidth;
-                    if (ctx.isPointInStroke(x, y)) {
-                        return true;
-                    }      
+                if (ctx.isPointInPath(x, y)) {
+                    return true;
                 }
             }
         }
@@ -213,7 +199,7 @@ define(function(require) {
             }
         }
 
-        // addBenck('mathMethod', 'Math method');
+        addBenck('mathMethod', 'Math method');
         addBenck('buildPath', 'Native isPointInPath');
         addBenck('jsInsidePath', 'JS isPointInPath');
         // addBenck('pixelMethod', 'pixelMethod');

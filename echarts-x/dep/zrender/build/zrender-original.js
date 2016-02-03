@@ -1457,18 +1457,16 @@ return G_vmlCanvasManager;
 }); // define
 ;
 /**
- * @module zrender/tool/util
+ * zrender: 公共辅助函数
+ *
  * @author Kener (@Kener-林峰, kener.linfeng@gmail.com)
- *         Yi Shen(https://github.com/pissang)
+ *
+ * clone：深度克隆
+ * merge：合并源对象的属性到目标对象
+ * getContext：获取一个自由使用的canvas 2D context，使用原生方法，如isPointInPath，measureText等
  */
 define(
     'zrender/tool/util',['require','../dep/excanvas'],function(require) {
-
-        var ArrayProto = Array.prototype;
-        var nativeForEach = ArrayProto.forEach;
-        var nativeMap = ArrayProto.map;
-        var nativeFilter = ArrayProto.filter;
-
         // 用于处理merge时无法遍历Date等对象的问题
         var BUILTIN_OBJECT = {
             '[object Function]': 1,
@@ -1487,9 +1485,9 @@ define(
 
         /**
          * 对一个object进行深度拷贝
-         * @memberOf module:zrender/tool/util
-         * @param {*} source 需要进行拷贝的对象
-         * @return {*} 拷贝后的新对象
+         *
+         * @param {Any} source 需要进行拷贝的对象
+         * @return {Any} 拷贝后的新对象
          */
         function clone(source) {
             if (typeof source == 'object' && source !== null) {
@@ -1543,7 +1541,7 @@ define(
 
         /**
          * 合并源对象的属性到目标对象
-         * @memberOf module:zrender/tool/util
+         * modify from Tangram
          * @param {*} target 目标对象
          * @param {*} source 源对象
          * @param {boolean} overwrite 是否覆盖
@@ -1579,10 +1577,82 @@ define(
             return _ctx;
         }
 
+        var _canvas;
+        var _pixelCtx;
+        var _width;
+        var _height;
+        var _offsetX = 0;
+        var _offsetY = 0;
+
         /**
-         * @memberOf module:zrender/tool/util
-         * @param {Array} array
-         * @param {*} value
+         * 获取像素拾取专用的上下文
+         * @return {Object} 上下文
+         */
+        function getPixelContext() {
+            if (!_pixelCtx) {
+                _canvas = document.createElement('canvas');
+                _width = _canvas.width;
+                _height = _canvas.height;
+                _pixelCtx = _canvas.getContext('2d');
+            }
+            return _pixelCtx;
+        }
+
+        /**
+         * 如果坐标处在_canvas外部，改变_canvas的大小
+         * @param {number} x : 横坐标
+         * @param {number} y : 纵坐标
+         * 注意 修改canvas的大小 需要重新设置translate
+         */
+        function adjustCanvasSize(x, y) {
+            // 每次加的长度
+            var _v = 100;
+            var _flag;
+
+            if (x + _offsetX > _width) {
+                _width = x + _offsetX + _v;
+                _canvas.width = _width;
+                _flag = true;
+            }
+
+            if (y + _offsetY > _height) {
+                _height = y + _offsetY + _v;
+                _canvas.height = _height;
+                _flag = true;
+            }
+
+            if (x < -_offsetX) {
+                _offsetX = Math.ceil(-x / _v) * _v;
+                _width += _offsetX;
+                _canvas.width = _width;
+                _flag = true;
+            }
+
+            if (y < -_offsetY) {
+                _offsetY = Math.ceil(-y / _v) * _v;
+                _height += _offsetY;
+                _canvas.height = _height;
+                _flag = true;
+            }
+
+            if (_flag) {
+                _pixelCtx.translate(_offsetX, _offsetY);
+            }
+        }
+
+        /**
+         * 获取像素canvas的偏移量
+         * @return {Object} 偏移量
+         */
+        function getPixelOffset() {
+            return {
+                x : _offsetX,
+                y : _offsetY
+            };
+        }
+
+        /**
+         * 查询数组中元素的index
          */
         function indexOf(array, value) {
             if (array.indexOf) {
@@ -1598,7 +1668,7 @@ define(
 
         /**
          * 构造类继承关系
-         * @memberOf module:zrender/tool/util
+         * 
          * @param {Function} clazz 源类
          * @param {Function} baseClazz 基类
          */
@@ -1614,101 +1684,15 @@ define(
             clazz.constructor = clazz;
         }
 
-        /**
-         * 数组或对象遍历
-         * @memberOf module:zrender/tool/util
-         * @param {Object|Array} obj
-         * @param {Function} cb
-         * @param {*} [context]
-         */
-        function each(obj, cb, context) {
-            if (!(obj && cb)) {
-                return;
-            }
-            if (obj.forEach && obj.forEach === nativeForEach) {
-                obj.forEach(cb, context);
-            }
-            else if (obj.length === +obj.length) {
-                for (var i = 0, len = obj.length; i < len; i++) {
-                    cb.call(context, obj[i], i, obj);
-                }
-            }
-            else {
-                for (var key in obj) {
-                    if (obj.hasOwnProperty(key)) {
-                        cb.call(context, obj[key], key, obj);
-                    }
-                }
-            }
-        }
-
-        /**
-         * 数组映射
-         * @memberOf module:zrender/tool/util
-         * @param {Array} obj
-         * @param {Function} cb
-         * @param {*} [context]
-         * @return {Array}
-         */
-        function map(obj, cb, context) {
-            if (!(obj && cb)) {
-                return;
-            }
-            if (obj.map && obj.map === nativeMap) {
-                return obj.map(cb, context);
-            }
-            else {
-                var result = [];
-                for (var i = 0, len = obj.length; i < len; i++) {
-                    result.push(cb.call(context, obj[i], i, obj));
-                }
-                return result;
-            }
-        }
-
-        /**
-         * 数组过滤
-         * @memberOf module:zrender/tool/util
-         * @param {Array} obj
-         * @param {Function} cb
-         * @param {*} [context]
-         * @return {Array}
-         */
-        function filter(obj, cb, context) {
-            if (!(obj && cb)) {
-                return;
-            }
-            if (obj.filter && obj.filter === nativeFilter) {
-                return obj.filter(cb, context);
-            }
-            else {
-                var result = [];
-                for (var i = 0, len = obj.length; i < len; i++) {
-                    if (cb.call(context, obj[i], i, obj)) {
-                        result.push(obj[i]);
-                    }
-                }
-                return result;
-            }
-        }
-
-        function bind(func, context) {
-            
-            return function () {
-                func.apply(context, arguments);
-            }
-        }
-
         return {
             inherits: inherits,
-            clone: clone,
-            merge: merge,
-            getContext: getContext,
-            indexOf: indexOf,
-            each: each,
-            map: map,
-            filter: filter,
-            bind: bind
+            clone : clone,
+            merge : merge,
+            getContext : getContext,
+            getPixelContext : getPixelContext,
+            getPixelOffset : getPixelOffset,
+            adjustCanvasSize : adjustCanvasSize,
+            indexOf : indexOf
         };
     }
 );
@@ -1813,8 +1797,6 @@ define('zrender/config',[],function () {
              */
             touchClickDelay : 300
         },
-
-        elementClassName: 'zr-element',
 
         // 是否异常捕获
         catchBrushException: false,
@@ -2736,6 +2718,26 @@ define(
                 out[4] = (ac * aty - ad * atx) * det;
                 out[5] = (ab * atx - aa * aty) * det;
                 return out;
+            },
+
+            /**
+             * 矩阵左乘向量
+             * @param {Float32Array|Array.<number>} out
+             * @param {Float32Array|Array.<number>} a
+             * @param {Float32Array|Array.<number>} v
+             */
+            mulVector : function(out, a, v) {
+                var aa = a[0];
+                var ac = a[2];
+                var atx = a[4];
+                var ab = a[1];
+                var ad = a[3];
+                var aty = a[5];
+
+                out[0] = v[0] * aa + v[1] * ac + atx;
+                out[1] = v[0] * ab + v[1] * ad + aty;
+
+                return out;
             }
         };
 
@@ -2751,7 +2753,6 @@ define(
  *
  */
 // TODO mouseover 只触发一次
-// 目前的高亮因为每次都需要 addHover 所以不能只是开始的时候触发一次
 define(
     'zrender/Handler',['require','./config','./tool/env','./tool/event','./tool/util','./tool/vector','./tool/matrix','./mixin/Eventful'],function (require) {
 
@@ -2773,23 +2774,6 @@ define(
             'touchstart', 'touchend', 'touchmove'
         ];
 
-        var isZRenderElement = function (event) {
-            // 暂时忽略 IE8-
-            if (window.G_vmlCanvasManager) {
-                return true;
-            }
-
-            event = event || window.event;
-
-            // 进入对象优先~
-            var target = event.toElement
-                          || event.relatedTarget
-                          || event.srcElement
-                          || event.target;
-
-            return target && target.className.match(config.elementClassName)
-        };
-
         var domHandlers = {
             /**
              * 窗口大小改变响应函数
@@ -2810,11 +2794,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            click: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            click: function (event) {
                 event = this._zrenderEventFixed(event);
 
                 // 分发config.EVENT.CLICK事件
@@ -2837,11 +2817,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            dblclick: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            dblclick: function (event) {
                 event = event || window.event;
                 event = this._zrenderEventFixed(event);
 
@@ -2866,11 +2842,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mousewheel: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mousewheel: function (event) {
                 event = this._zrenderEventFixed(event);
 
                 // http://www.sitepoint.com/html5-javascript-mouse-wheel/
@@ -2921,11 +2893,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mousemove: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mousemove: function (event) {
                 if (this.painter.isLoading()) {
                     return;
                 }
@@ -3018,11 +2986,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mouseout: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mouseout: function (event) {
                 event = this._zrenderEventFixed(event);
 
                 var element = event.toElement || event.relatedTarget;
@@ -3058,11 +3022,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mousedown: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mousedown: function (event) {
                 // 重置 clickThreshold
                 this._clickThreshold = 0;
 
@@ -3088,11 +3048,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mouseup: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mouseup: function (event) {
                 event = this._zrenderEventFixed(event);
                 this.root.style.cursor = 'default';
                 this._isMouseDown = 0;
@@ -3109,11 +3065,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            touchstart: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            touchstart: function (event) {
                 // eventTool.stop(event);// 阻止浏览器默认事件，重要
                 event = this._zrenderEventFixed(event, true);
                 this._lastTouchMoment = new Date();
@@ -3128,11 +3080,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            touchmove: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            touchmove: function (event) {
                 event = this._zrenderEventFixed(event, true);
                 this._mousemoveHandler(event);
                 if (this._isDragging) {
@@ -3145,11 +3093,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            touchend: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            touchend: function (event) {
                 // eventTool.stop(event);// 阻止浏览器默认事件，重要
                 event = this._zrenderEventFixed(event, true);
                 this._mouseupHandler(event);
@@ -3178,16 +3122,16 @@ define(
          * @param {Object} context 运行时this环境
          * @return {Function}
          */
-        // function bind1Arg(handler, context) {
-        //     return function (e) {
-        //         return handler.call(context, e);
-        //     };
-        // }
-        function bind2Arg(handler, context) {
+        function bind1Arg(handler, context) {
+            return function (e) {
+                return handler.call(context, e);
+            };
+        }
+        /**function bind2Arg(handler, context) {
             return function (arg1, arg2) {
                 return handler.call(context, arg1, arg2);
             };
-        }
+        }*/
 
         function bind3Arg(handler, context) {
             return function (arg1, arg2, arg3) {
@@ -3204,7 +3148,7 @@ define(
             var len = domHandlerNames.length;
             while (len--) {
                 var name = domHandlerNames[len];
-                instance['_' + name + 'Handler'] = bind2Arg(domHandlers[name], instance);
+                instance['_' + name + 'Handler'] = bind1Arg(domHandlers[name], instance);
             }
         }
 
@@ -3316,7 +3260,7 @@ define(
                 case EVENT.MOUSEDOWN:
                 case EVENT.MOUSEUP:
                 case EVENT.MOUSEOUT:
-                    this['_' + eventName + 'Handler'](eventArgs, true);
+                    this['_' + eventName + 'Handler'](eventArgs);
                     break;
             }
         };
@@ -4831,7 +4775,7 @@ define(
                     var y_ = curve.quadraticAt(y0, y1, y2, t);
                     for (var i = 0; i < nRoots; i++) {
                         var x_ = curve.quadraticAt(x0, x1, x2, roots[i]);
-                        if (x_ < x) {
+                        if (x_ > x) {
                             continue;
                         }
                         if (roots[i] < t) {
@@ -4845,7 +4789,7 @@ define(
                 } 
                 else {
                     var x_ = curve.quadraticAt(x0, x1, x2, roots[0]);
-                    if (x_ < x) {
+                    if (x_ > x) {
                         return 0;
                     }
                     return y2 < y0 ? 1 : -1;
@@ -5399,7 +5343,7 @@ define('zrender/mixin/Transformable',['require','../tool/matrix','../tool/vector
         transformCoordToLocal: function (x, y) {
             var v2 = [x, y];
             if (this.needTransform && this.invTransform) {
-                vector.applyTransform(v2, v2, this.invTransform);
+                matrix.mulVector(v2, this.invTransform, v2);
             }
             return v2;
         }
@@ -7797,8 +7741,6 @@ define('zrender/Layer',['require','./mixin/Transformable','./tool/util','./confi
         this.dom.style['-webkit-touch-callout'] = 'none';
         this.dom.style['-webkit-tap-highlight-color'] = 'rgba(0,0,0,0)';
 
-        this.dom.className = config.elementClassName;
-
         vmlCanvasManager && vmlCanvasManager.initElement(this.dom);
 
         this.domBack = null;
@@ -8254,7 +8196,6 @@ define(
                 '-webkit-touch-callout:none;'
             ].join('');
             this._bgDom.setAttribute('data-zr-dom-id', 'bg');
-            this._bgDom.className = config.elementClassName;
 
             domRoot.appendChild(this._bgDom);
             this._bgDom.onselectstart = returnFalse;
@@ -9370,22 +9311,22 @@ define(
 
             el.updateTransform();
 
-            if (el.clipShape) {
-                // clipShape 的变换是基于 group 的变换
-                el.clipShape.parent = el;
-                el.clipShape.updateTransform();
-
-                // PENDING 效率影响
-                if (clipShapes) {
-                    clipShapes = clipShapes.slice();
-                    clipShapes.push(el.clipShape);
-                } else {
-                    clipShapes = [el.clipShape];
-                }
-            }
-
             if (el.type == 'group') {
                 
+                if (el.clipShape) {
+                    // clipShape 的变换是基于 group 的变换
+                    el.clipShape.parent = el;
+                    el.clipShape.updateTransform();
+
+                    // PENDING 效率影响
+                    if (clipShapes) {
+                        clipShapes = clipShapes.slice();
+                        clipShapes.push(el.clipShape);
+                    } else {
+                        clipShapes = [el.clipShape];
+                    }
+                }
+
                 for (var i = 0; i < el._children.length; i++) {
                     var child = el._children[i];
 
@@ -10039,7 +9980,7 @@ define(
                     
                     // 动画完成将这个控制器标识为待删除
                     // 在Animation.update中进行批量删除
-                    this.__needsRemove = true;
+                    this._needsRemove = true;
                     return 'destroy';
                 }
                 
@@ -10050,7 +9991,7 @@ define(
                 var remainder = (time - this._startTime) % this._life;
                 this._startTime = new Date().getTime() - remainder + this.gap;
 
-                this.__needsRemove = false;
+                this._needsRemove = false;
             },
             fire : function(eventType, arg) {
                 for (var i = 0, len = this._targetPool.length; i < len; i++) {
@@ -10151,16 +10092,9 @@ define(
              * @param {module:zrender/animation/Clip} clip
              */
             remove: function(clip) {
-                if (clip.__inStep) {
-                    // 如果是在 step 中，不能直接移除
-                    // 需要标记为 needsRemove 然后在所有 clip step 完成后移除
-                    clip.__needsRemove = true;
-                }
-                else {
-                    var idx = util.indexOf(this._clips, clip);
-                    if (idx >= 0) {
-                        this._clips.splice(idx, 1);
-                    }
+                var idx = util.indexOf(this._clips, clip);
+                if (idx >= 0) {
+                    this._clips.splice(idx, 1);
                 }
             },
             _update: function() {
@@ -10174,9 +10108,7 @@ define(
                 var deferredClips = [];
                 for (var i = 0; i < len; i++) {
                     var clip = clips[i];
-                    clip.__inStep = true;
                     var e = clip.step(time);
-                    clip.__inStep = false;
                     // Throw out the events need to be called after
                     // stage.update, like destroy
                     if (e) {
@@ -10187,7 +10119,7 @@ define(
 
                 // Remove the finished clip
                 for (var i = 0; i < len;) {
-                    if (clips[i].__needsRemove) {
+                    if (clips[i]._needsRemove) {
                         clips[i] = clips[len - 1];
                         clips.pop();
                         len--;
@@ -10729,7 +10661,7 @@ define(
         /**
          * @type {string}
          */
-        zrender.version = '2.1.1';
+        zrender.version = '2.0.8';
 
         /**
          * 创建zrender实例
@@ -10791,7 +10723,11 @@ define(
 
         function getFrameCallback(zrInstance) {
             return function () {
-                if (zrInstance._needsRefreshNextFrame) {
+                var animatingElements = zrInstance.animatingElements;
+                for (var i = 0, l = animatingElements.length; i < l; i++) {
+                    zrInstance.storage.mod(animatingElements[i].id);
+                }
+                if (animatingElements.length || zrInstance._needsRefreshNextFrame) {
                     zrInstance.refresh();
                 }
             };
@@ -10822,6 +10758,8 @@ define(
             this.painter = new Painter(dom, this.storage);
             this.handler = new Handler(dom, this.storage, this.painter);
 
+            // 动画控制
+            this.animatingElements = [];
             /**
              * @type {module:zrender/animation/Animation}
              */
@@ -11061,8 +10999,6 @@ define(
          *         .start()
          */
         ZRender.prototype.animate = function (el, path, loop) {
-            var self = this;
-
             if (typeof(el) === 'string') {
                 el = this.storage.get(el);
             }
@@ -11095,20 +11031,26 @@ define(
                     return;
                 }
 
+                var animatingElements = this.animatingElements;
                 if (el.__animators == null) {
                     // 正在进行的动画记数
                     el.__animators = [];
                 }
                 var animators = el.__animators;
+                if (animators.length === 0) {
+                    animatingElements.push(el);
+                }
 
                 var animator = this.animation.animate(target, { loop: loop })
-                    .during(function () {
-                        self.modShape(el);
-                    })
                     .done(function () {
                         var idx = util.indexOf(el.__animators, animator);
                         if (idx >= 0) {
                             animators.splice(idx, 1);
+                        }
+                        if (animators.length === 0) {
+                            // 从animatingElements里移除
+                            var idx = util.indexOf(animatingElements, el);
+                            animatingElements.splice(idx, 1);
                         }
                     });
                 animators.push(animator);
@@ -11131,6 +11073,14 @@ define(
                 for (var i = 0; i < len; i++) {
                     animators[i].stop();
                 }
+                if (len > 0) {
+                    var animatingElements = this.animatingElements;
+                    var idx = util.indexOf(animatingElements, el);
+                    if (idx >= 0) {
+                        animatingElements.splice(idx, 1);
+                    }
+                }
+
                 animators.length = 0;
             }
             return this;
@@ -11141,6 +11091,7 @@ define(
          */
         ZRender.prototype.clearAnimation = function () {
             this.animation.clear();
+            this.animatingElements.length = 0;
             return this;
         };
 
@@ -11253,6 +11204,7 @@ define(
             this.handler.dispose();
 
             this.animation = 
+            this.animatingElements = 
             this.storage = 
             this.painter = 
             this.handler = null;

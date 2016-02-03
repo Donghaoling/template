@@ -119,11 +119,8 @@ define(function (require) {
             var series = this.series;
             // 复用参数索引
             this._paramsMap = {};
-            this.selectedMap = {};
             for (var i = 0, l = series.length; i < l; i++) {
                 if (series[i].type === ecConfig.CHART_TYPE_GAUGE) {
-                    //仪表图不用去legend 获取状态，默认这里给的true 
-                    this.selectedMap[series[i].name] = true;
                     series[i] = this.reformOption(series[i]);
                     this.legendHoverLink = series[i].legendHoverLink || this.legendHoverLink;
                     this._buildSingleGauge(i);
@@ -196,9 +193,7 @@ define(function (require) {
                     newAngle,           // startAngle
                     lastAngle,          // endAngle
                     colorArray[i][1],   // color
-                    lineStyle,
-                    serie.zlevel,
-                    serie.z
+                    lineStyle
                 );
                 lastAngle = newAngle;
                 sectorShape._animationAdd = 'r';
@@ -237,8 +232,8 @@ define(function (require) {
                 sinAngle = Math.sin(angle);
                 cosAngle = Math.cos(angle);
                 this.shapeList.push(new LineShape({
-                    zlevel: serie.zlevel,
-                    z: serie.z + 1,
+                    zlevel: this.getZlevelBase(),
+                    z: this.getZBase() + 1,
                     hoverable: false,
                     style: {
                         xStart: center[0] + cosAngle * r,
@@ -293,8 +288,8 @@ define(function (require) {
                 sinAngle = Math.sin(angle);
                 cosAngle = Math.cos(angle);
                 this.shapeList.push(new LineShape({
-                    zlevel: serie.zlevel,
-                    z: serie.z + 1,
+                    zlevel: this.getZlevelBase(),
+                    z: this.getZBase() + 1,
                     hoverable: false,
                     style: {
                         xStart: center[0] + cosAngle * r,
@@ -350,8 +345,8 @@ define(function (require) {
                 cosAngle = Math.cos(angle * Math.PI / 180);
                 angle = (angle + 360) % 360;
                 this.shapeList.push(new TextShape({
-                    zlevel: serie.zlevel,
-                    z: serie.z + 1,
+                    zlevel: this.getZlevelBase(),
+                    z: this.getZBase() + 1,
                     hoverable: false,
                     style: {
                         x: center[0] + cosAngle * r0,
@@ -400,8 +395,8 @@ define(function (require) {
                         : pointer.color;
             
             var pointShape = new GaugePointerShape({
-                zlevel: serie.zlevel,
-                z: serie.z + 1,
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase() + 1,
                 clickable: this.query(serie, 'clickable'),
                 style: {
                     x: center[0],
@@ -432,8 +427,8 @@ define(function (require) {
             this.shapeList.push(pointShape);
             
             this.shapeList.push(new CircleShape({
-                zlevel: serie.zlevel,
-                z: serie.z + 2,
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase() + 2,
                 hoverable: false,
                 style: {
                     x: center[0],
@@ -461,8 +456,8 @@ define(function (require) {
                 var x = params.center[0] + this.parsePercent(offsetCenter[0], params.radius[1]);
                 var y = params.center[1] + this.parsePercent(offsetCenter[1], params.radius[1]);
                 this.shapeList.push(new TextShape({
-                    zlevel: serie.zlevel,
-                    z: serie.z + (
+                    zlevel: this.getZlevelBase(),
+                    z: this.getZBase() + (
                         (Math.abs(x - params.center[0]) + Math.abs(y - params.center[1])) 
                           < textStyle.fontSize * 2 ? 2 : 1
                     ),
@@ -502,8 +497,8 @@ define(function (require) {
             var y = params.center[1] 
                     + this.parsePercent(offsetCenter[1], params.radius[1]);
             this.shapeList.push(new RectangleShape({
-                zlevel: serie.zlevel,
-                z: serie.z + (
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase() + (
                     (Math.abs(x + detail.width / 2 - params.center[0]) 
                      + Math.abs(y + detail.height / 2 - params.center[1])) < textStyle.fontSize 
                     ? 2 : 1
@@ -574,10 +569,10 @@ define(function (require) {
         /**
          * 构建扇形
          */
-        _getSector: function (center, r0, r, startAngle, endAngle, color, lineStyle, zlevel, z) {
+        _getSector: function (center, r0, r, startAngle, endAngle, color, lineStyle) {
             return new SectorShape ({
-                zlevel: zlevel,
-                z: z,
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase(),
                 hoverable: false,
                 style: {
                     x: center[0],      // 圆心横坐标

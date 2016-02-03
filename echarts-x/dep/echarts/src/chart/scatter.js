@@ -314,7 +314,6 @@ define(function (require) {
                 seriesPL = pointList[seriesIndex];                
                 if (serie.large && serie.data.length > serie.largeThreshold) {
                     this.shapeList.push(this._getLargeSymbol(
-                        serie,
                         seriesPL, 
                         this.getItemStyleColor(
                             this.query(
@@ -381,17 +380,17 @@ define(function (require) {
                 'rgba(0,0,0,0)',
                 'vertical'
             );
-            itemShape.zlevel = serie.zlevel;
-            itemShape.z = serie.z;
+            itemShape.zlevel = this.getZlevelBase();
+            itemShape.z = this.getZBase();
             
             itemShape._main = true;
             return itemShape;
         },
         
-        _getLargeSymbol: function (serie, pointList, nColor) {
+        _getLargeSymbol: function (pointList, nColor) {
             return new SymbolShape({
-                zlevel: serie.zlevel,
-                z: serie.z,
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase(),
                 _main: true,
                 hoverable: false,
                 style: {

@@ -525,8 +525,8 @@ define(function (require) {
 
                         // 折线图
                         var polylineShape = new PolylineShape({
-                            zlevel: serie.zlevel,
-                            z: serie.z,
+                            zlevel: this.getZlevelBase(),
+                            z: this.getZBase(),
                             style: {
                                 miterLimit: lineWidth,
                                 pointList: singlePL,
@@ -570,8 +570,8 @@ define(function (require) {
                         
                         if (isFill) {
                             var halfSmoothPolygonShape = new HalfSmoothPolygonShape({
-                                zlevel: serie.zlevel,
-                                z: serie.z,
+                                zlevel: this.getZlevelBase(),
+                                z: this.getZBase(),
                                 style: {
                                     miterLimit: lineWidth,
                                     pointList: zrUtil.clone(singlePL).concat([
@@ -788,8 +788,8 @@ define(function (require) {
                 '#fff',
                 orient === 'vertical' ? 'horizontal' : 'vertical' // 翻转
             );
-            itemShape.zlevel = serie.zlevel;
-            itemShape.z = serie.z + 1;
+            itemShape.zlevel = this.getZlevelBase();
+            itemShape.z = this.getZBase() + 1;
             
             if (this.deepQuery([data, serie, this.option], 'calculable')) {
                 this.setCalculable(itemShape);
@@ -978,7 +978,7 @@ define(function (require) {
 
             // 没有动画
             if (!aniCount) {
-                done && done();
+                animationDone();
             }
         }
     };

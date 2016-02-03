@@ -239,7 +239,7 @@ define(function (require) {
         transformCoordToLocal: function (x, y) {
             var v2 = [x, y];
             if (this.needTransform && this.invTransform) {
-                vector.applyTransform(v2, v2, this.invTransform);
+                matrix.mulVector(v2, this.invTransform, v2);
             }
             return v2;
         }

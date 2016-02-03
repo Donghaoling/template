@@ -333,8 +333,8 @@ define('echarts/chart/funnel', [
                 break;
             }
             var polygon = {
-                zlevel: serie.zlevel,
-                z: serie.z,
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase(),
                 clickable: this.deepQuery(queryTarget, 'clickable'),
                 style: {
                     pointList: [
@@ -399,8 +399,8 @@ define('echarts/chart/funnel', [
                 textAlign = 'left';
             }
             var textShape = {
-                zlevel: serie.zlevel,
-                z: serie.z + 1,
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase() + 1,
                 style: {
                     x: this._getLabelPoint(labelControl.position, x, location, topWidth, bottomWidth, lineLength, align),
                     y: y + height / 2,
@@ -476,8 +476,8 @@ define('echarts/chart/funnel', [
             var labelControl = itemStyle[status].label;
             labelControl.position = labelControl.position || itemStyle.normal.label.position;
             var lineShape = {
-                zlevel: serie.zlevel,
-                z: serie.z + 1,
+                zlevel: this.getZlevelBase(),
+                z: this.getZBase() + 1,
                 hoverable: false,
                 style: {
                     xStart: this._getLabelLineStartPoint(x, location, topWidth, bottomWidth, align),

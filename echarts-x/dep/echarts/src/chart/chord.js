@@ -225,14 +225,11 @@ define(function (require) {
 
                 if (this.selectedMap[serie.name]) {
                     var graph;
-                    // matrix 表示边
-                    if (serie.matrix) {
+                    if (serie.data && serie.matrix) {
                         graph = this._getSerieGraphFromDataMatrix(
                             serie, mainSerie
                         );
-                    }
-                    // links 表示边
-                    else if (serie.links) {
+                    } else if (serie.nodes && serie.links) {
                         graph = this._getSerieGraphFromNodeLinks(
                             serie, mainSerie
                         );
@@ -548,8 +545,8 @@ define(function (require) {
                 var startAngle = node.layout.startAngle / Math.PI * 180 * sign;
                 var endAngle = node.layout.endAngle / Math.PI * 180 * sign;
                 var sector = new SectorShape({
-                    zlevel: serie.zlevel,
-                    z : serie.z,
+                    zlevel: this.getZlevelBase(),
+                    z : this.getZBase(),
                     style: {
                         x: center[0],
                         y: center[1],
@@ -627,8 +624,8 @@ define(function (require) {
                     color = category ? this.getColor(category.name) : this.getColor(node.id);
                 }
                 var iconShape = new IconShape({
-                    zlevel: serie.zlevel,
-                    z: serie.z + 1,
+                    zlevel: this.getZlevelBase(),
+                    z: this.getZBase() + 1,
                     style: {
                         x: - node.layout.size,
                         y: - node.layout.size,
@@ -666,9 +663,9 @@ define(function (require) {
         },
 
         _buildLabels: function (serie, serieIdx, graph, mainSerie) {
-            // var labelColor = this.query(
-                // mainSerie, 'itemStyle.normal.label.color'
-            // );
+            var labelColor = this.query(
+                mainSerie, 'itemStyle.normal.label.color'
+            );
             var rotateLabel = this.query(
                 mainSerie, 'itemStyle.normal.label.rotate'
             );
@@ -704,12 +701,13 @@ define(function (require) {
                 vec2.add(start, start, center);
 
                 var labelShape = {
-                    zlevel: serie.zlevel,
-                    z: serie.z + 1,
+                    zlevel: this.getZlevelBase(),
+                    z: this.getZBase() + 1,
                     hoverable: false,
                     style: {
                         text: node.data.label == null ? node.id : node.data.label,
-                        textAlign: isRightSide ? 'left' : 'right'
+                        textAlign: isRightSide ? 'left' : 'right',
+                        color: labelColor || '#000000'
                     }
                 };
                 if (rotateLabel) {
@@ -727,12 +725,10 @@ define(function (require) {
                     labelShape.style.x = start[0];
                     labelShape.style.y = start[1];
                 }
-
-                // zrender/Text并没有textColor属性，ctx fillStyle使用的是color
-                labelShape.style.color = this.deepQuery(
+                labelShape.style.textColor = this.deepQuery(
                     [node.data, mainSerie],
                     'itemStyle.normal.label.textStyle.color'
-                ) || '#000000';
+                ) || '#fff';
                 labelShape.style.textFont = this.getFont(this.deepQuery(
                     [node.data, mainSerie],
                     'itemStyle.normal.label.textStyle'
@@ -787,8 +783,8 @@ define(function (require) {
                     serie, edge.data, 'emphasis'
                 );
                 var ribbon = new RibbonShape({
-                    zlevel: serie.zlevel,
-                    z: serie.z,
+                    zlevel: this.getZlevelBase(),
+                    z: this.getZBase(),
                     style: {
                         x: center[0],
                         y: center[1],
@@ -859,8 +855,8 @@ define(function (require) {
                 );
 
                 var curveShape = new BezierCurveShape({
-                    zlevel: serie.zlevel,
-                    z: serie.z,
+                    zlevel: this.getZlevelBase(),
+                    z: this.getZBase(),
                     style: {
                         xStart: shape1.position[0],
                         yStart: shape1.position[1],
@@ -965,8 +961,8 @@ define(function (require) {
                     var end = vec2.scale([], v, radius[1] + this.scaleLineLength);
                     vec2.add(end, end, center);
                     var scaleShape = new LineShape({
-                        zlevel: serie.zlevel,
-                        z: serie.z - 1,
+                        zlevel: this.getZlevelBase(),
+                        z: this.getZBase() - 1,
                         hoverable: false,
                         style: {
                             xStart: start[0],
@@ -1006,8 +1002,8 @@ define(function (require) {
                                      || theta >= 270;
 
                     var textShape = new TextShape({
-                        zlevel: serie.zlevel,
-                        z: serie.z - 1,
+                        zlevel: this.getZlevelBase(),
+                        z: this.getZBase() - 1,
                         hoverable: false,
                         style: {
                             x: isRightSide 

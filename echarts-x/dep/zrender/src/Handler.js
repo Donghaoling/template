@@ -6,7 +6,6 @@
  *
  */
 // TODO mouseover 只触发一次
-// 目前的高亮因为每次都需要 addHover 所以不能只是开始的时候触发一次
 define(
     function (require) {
 
@@ -28,23 +27,6 @@ define(
             'touchstart', 'touchend', 'touchmove'
         ];
 
-        var isZRenderElement = function (event) {
-            // 暂时忽略 IE8-
-            if (window.G_vmlCanvasManager) {
-                return true;
-            }
-
-            event = event || window.event;
-
-            // 进入对象优先~
-            var target = event.toElement
-                          || event.relatedTarget
-                          || event.srcElement
-                          || event.target;
-
-            return target && target.className.match(config.elementClassName)
-        };
-
         var domHandlers = {
             /**
              * 窗口大小改变响应函数
@@ -65,11 +47,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            click: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            click: function (event) {
                 event = this._zrenderEventFixed(event);
 
                 // 分发config.EVENT.CLICK事件
@@ -92,11 +70,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            dblclick: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            dblclick: function (event) {
                 event = event || window.event;
                 event = this._zrenderEventFixed(event);
 
@@ -121,11 +95,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mousewheel: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mousewheel: function (event) {
                 event = this._zrenderEventFixed(event);
 
                 // http://www.sitepoint.com/html5-javascript-mouse-wheel/
@@ -176,11 +146,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mousemove: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mousemove: function (event) {
                 if (this.painter.isLoading()) {
                     return;
                 }
@@ -273,11 +239,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mouseout: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mouseout: function (event) {
                 event = this._zrenderEventFixed(event);
 
                 var element = event.toElement || event.relatedTarget;
@@ -313,11 +275,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mousedown: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mousedown: function (event) {
                 // 重置 clickThreshold
                 this._clickThreshold = 0;
 
@@ -343,11 +301,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            mouseup: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            mouseup: function (event) {
                 event = this._zrenderEventFixed(event);
                 this.root.style.cursor = 'default';
                 this._isMouseDown = 0;
@@ -364,11 +318,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            touchstart: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            touchstart: function (event) {
                 // eventTool.stop(event);// 阻止浏览器默认事件，重要
                 event = this._zrenderEventFixed(event, true);
                 this._lastTouchMoment = new Date();
@@ -383,11 +333,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            touchmove: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            touchmove: function (event) {
                 event = this._zrenderEventFixed(event, true);
                 this._mousemoveHandler(event);
                 if (this._isDragging) {
@@ -400,11 +346,7 @@ define(
              * @inner
              * @param {Event} event
              */
-            touchend: function (event, manually) {
-                if (! isZRenderElement(event) && ! manually) {
-                    return;
-                }
-
+            touchend: function (event) {
                 // eventTool.stop(event);// 阻止浏览器默认事件，重要
                 event = this._zrenderEventFixed(event, true);
                 this._mouseupHandler(event);
@@ -433,16 +375,16 @@ define(
          * @param {Object} context 运行时this环境
          * @return {Function}
          */
-        // function bind1Arg(handler, context) {
-        //     return function (e) {
-        //         return handler.call(context, e);
-        //     };
-        // }
-        function bind2Arg(handler, context) {
+        function bind1Arg(handler, context) {
+            return function (e) {
+                return handler.call(context, e);
+            };
+        }
+        /**function bind2Arg(handler, context) {
             return function (arg1, arg2) {
                 return handler.call(context, arg1, arg2);
             };
-        }
+        }*/
 
         function bind3Arg(handler, context) {
             return function (arg1, arg2, arg3) {
@@ -459,7 +401,7 @@ define(
             var len = domHandlerNames.length;
             while (len--) {
                 var name = domHandlerNames[len];
-                instance['_' + name + 'Handler'] = bind2Arg(domHandlers[name], instance);
+                instance['_' + name + 'Handler'] = bind1Arg(domHandlers[name], instance);
             }
         }
 
@@ -571,7 +513,7 @@ define(
                 case EVENT.MOUSEDOWN:
                 case EVENT.MOUSEUP:
                 case EVENT.MOUSEOUT:
-                    this['_' + eventName + 'Handler'](eventArgs, true);
+                    this['_' + eventName + 'Handler'](eventArgs);
                     break;
             }
         };
